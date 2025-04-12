@@ -132,8 +132,8 @@ fun MovieHomeScreen(navController: NavController, movieViewModel: MovieViewModel
                             ) {
                                 TextButton(onClick = {
                                     coroutineScope.launch {
-                                        val videoUrl = movieViewModel.getTrailerUrlFor(movie.id)
-                                        navController.navigate("trailer/${Uri.encode(videoUrl)}")
+                                        val videoUrl = movieViewModel.getVideoKey(movie.id)
+                                        navController.navigate("trailer/$videoUrl")
                                     }
                                 }) {
                                     Text("Watch", color = Color.White)

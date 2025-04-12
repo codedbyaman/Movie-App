@@ -82,4 +82,19 @@ class MovieViewModel(application: Application) : AndroidViewModel(application) {
             ""
         }
     }
+
+    suspend fun getVideoKey (
+        movieId: Int
+    ): String {
+        return try {
+            val response: VideoResponse = ApiClient.movieService.getMovieVideos(movieId, apiKey)
+            val video = response.results.firstOrNull {
+                it.site.equals("YouTube", ignoreCase = true) &&
+                        it.type.equals("Trailer", ignoreCase = true)
+            }
+            video?.key ?: ""
+        } catch (e: Exception) {
+            ""
+        }
+    }
 }
