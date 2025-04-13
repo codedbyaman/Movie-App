@@ -1,12 +1,15 @@
 package com.example.movieapp
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -20,14 +23,24 @@ fun SplashScreen(onFinished: () -> Unit) {
     }
 
     Box(
-        modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
-    ) {
+        modifier = Modifier
+            .fillMaxSize()
+            .background(
+                brush = Brush.verticalGradient(
+                    colors = listOf(
+                        Color(0xFFEC4899), // Pink
+                        Color(0xFF742FD7),  // Purple
+
+                    )
+                )
+            )
+    )
+    {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Image(
                 painter = painterResource(id = R.drawable.splash_screen),
                 contentDescription = "Splash Logo",
-                modifier = Modifier.size(150.dp)
+                modifier = Modifier.fillMaxSize()
             )
             Spacer(modifier = Modifier.height(20.dp))
             Text(

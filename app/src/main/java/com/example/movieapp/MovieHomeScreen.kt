@@ -52,8 +52,11 @@ fun MovieHomeScreen(navController: NavController, movieViewModel: MovieViewModel
                 modifier = Modifier
                     .fillMaxWidth()
                     .background(
-                        Brush.horizontalGradient(
-                            colors = listOf(Color(0xFFEC4899), Color(0xFF8B5CF6))
+                        Brush.verticalGradient(
+                            colors = listOf(
+                                Color(0xFF8B5CF6),
+                                Color(0xFFEC4899)
+                            )
                         )
                     )
             ) {
