@@ -1,7 +1,5 @@
 package com.example.movieapp
 
-data class MovieResponse(val results: List<Movie>)
-
 data class Movie(
     val id: Int,
     val title: String,

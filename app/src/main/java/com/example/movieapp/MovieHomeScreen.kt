@@ -219,7 +219,7 @@ fun MovieHomeScreen(navController: NavController, movieViewModel: MovieViewModel
                                 if (isLoadingMore) {
                                     CircularProgressIndicator()
                                 } else {
-                                    Button(onClick = { movieViewModel.loadMore() }) {
+                                    Button(onClick = { movieViewModel.loadNextPage() }) {
                                         Text("Load More")
                                     }
                                 }

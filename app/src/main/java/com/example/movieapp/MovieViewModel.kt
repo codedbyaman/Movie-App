@@ -32,6 +32,9 @@ class MovieViewModel(application: Application) : AndroidViewModel(application) {
     val _noMoreItems = MutableStateFlow(false)
     val noMoreItems: StateFlow<Boolean> = _noMoreItems
 
+    private var currentPage = 1
+    private var totalPages = 1
+
 
     init {
         fetchMovies()
@@ -46,14 +49,39 @@ class MovieViewModel(application: Application) : AndroidViewModel(application) {
     fun fetchMovies() {
         viewModelScope.launch {
             try {
-                val response = ApiClient.movieService.getPopularMovies(apiKey)
+                currentPage = 1
+                _isLoadingMore.value = true
+                val response = ApiClient.movieService.getPopularMovies(apiKey, currentPage)
                 _movies.value = response.results
-                filterVisible()
+                _visibleMovies.value = response.results
+                totalPages = response.total_pages
             } catch (e: Exception) {
-                // Optionally handle error
+                // handle error
+            } finally {
+                _isLoadingMore.value = false
             }
         }
     }
+
+    fun loadNextPage() {
+        viewModelScope.launch {
+            if (_isLoadingMore.value || currentPage >= totalPages) return@launch
+
+            _isLoadingMore.value = true
+            currentPage += 1
+
+            try {
+                val response = ApiClient.movieService.getPopularMovies(apiKey, currentPage)
+                _movies.value = _movies.value + response.results
+                _visibleMovies.value = _visibleMovies.value + response.results
+            } catch (e: Exception) {
+                currentPage -= 1 // rollback page if failed
+            } finally {
+                _isLoadingMore.value = false
+            }
+        }
+    }
+
 
     fun filterVisible() {
         _visibleMovies.value = _movies.value
