@@ -34,16 +34,29 @@ import kotlinx.coroutines.launch
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MovieHomeScreen(navController: NavController, movieViewModel: MovieViewModel = viewModel()) {
+    val context = LocalContext.current
     val searchQuery by movieViewModel.searchQuery.collectAsState()
     val visibleMovies by movieViewModel.visibleMovies.collectAsState()
     val favorites by movieViewModel.favorites.collectAsState()
     val isRefreshing = remember { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
-    val context = LocalContext.current
     val isLoadingMore by movieViewModel.isLoadingMore.collectAsState()
     val noMoreItems by movieViewModel.noMoreItems.collectAsState()
+    val loadError by movieViewModel.loadError.collectAsState()
 
+    LaunchedEffect(noMoreItems) {
+        if (noMoreItems) {
+            Toast.makeText(context, "No more items to load", Toast.LENGTH_SHORT).show()
+            movieViewModel.resetNoMoreItems()
+        }
+    }
 
+    LaunchedEffect(loadError) {
+        loadError?.let {
+            Toast.makeText(context, it, Toast.LENGTH_SHORT).show()
+            movieViewModel.clearLoadError()
+        }
+    }
 
 
     Scaffold(
@@ -62,10 +75,7 @@ fun MovieHomeScreen(navController: NavController, movieViewModel: MovieViewModel
             ) {
                 TopAppBar(
                     title = {
-                        Box(
-                            modifier = Modifier.fillMaxWidth(),
-                            contentAlignment = Alignment.Center
-                        ) {
+                        Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
                             Text(
                                 text = "Movies And More",
                                 fontSize = 22.sp,
@@ -75,14 +85,8 @@ fun MovieHomeScreen(navController: NavController, movieViewModel: MovieViewModel
                         }
                     },
                     actions = {
-                        IconButton(onClick = {
-                            navController.navigate("favorites")
-                        }) {
-                            Icon(
-                                Icons.Default.Favorite,
-                                contentDescription = "Favorites",
-                                tint = Color.White
-                            )
+                        IconButton(onClick = { navController.navigate("favorites") }) {
+                            Icon(Icons.Default.Favorite, contentDescription = "Favorites", tint = Color.White)
                         }
                     },
                     colors = TopAppBarDefaults.topAppBarColors(
@@ -142,7 +146,15 @@ fun MovieHomeScreen(navController: NavController, movieViewModel: MovieViewModel
                                 .clickable {
                                     coroutineScope.launch {
                                         val videoId = movieViewModel.getVideoKey(movie.id)
-                                        navController.navigate("trailer/$videoId")
+                                        if (videoId.isNotBlank()) {
+                                            navController.navigate("trailer/$videoId")
+                                        } else {
+                                            Toast.makeText(
+                                                context,
+                                                "Unable to load video. Check your connection.",
+                                                Toast.LENGTH_SHORT
+                                            ).show()
+                                        }
                                     }
                                 },
                             colors = CardDefaults.cardColors(containerColor = Color(0xFF2C2C2C))
@@ -185,14 +197,9 @@ fun MovieHomeScreen(navController: NavController, movieViewModel: MovieViewModel
                                                         Toast.LENGTH_SHORT
                                                     ).show()
                                                 }
-
                                             }
                                         },
-                                        colors = ButtonDefaults.buttonColors(
-                                            containerColor = Color(
-                                                0xFF3B82F6
-                                            )
-                                        )
+                                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF3B82F6))
                                     ) {
                                         Text("Watch", color = Color.White)
                                     }
@@ -210,7 +217,6 @@ fun MovieHomeScreen(navController: NavController, movieViewModel: MovieViewModel
                         }
                     }
 
-                    // ✅ Correct placement of Load More
                     if (visibleMovies.size >= 10) {
                         item(span = { GridItemSpan(maxLineSpan) }) {
                             Box(
@@ -222,28 +228,15 @@ fun MovieHomeScreen(navController: NavController, movieViewModel: MovieViewModel
                                 if (isLoadingMore) {
                                     CircularProgressIndicator()
                                 } else {
-                                    Button(onClick = { movieViewModel.loadNextPage() }) {
+                                    Button(onClick = { movieViewModel.loadNextPage(context) }) {
                                         Text("Load More")
-                                    }
-                                }
-                                LaunchedEffect(noMoreItems) {
-                                    if (noMoreItems) {
-                                        Toast.makeText(
-                                            context,
-                                            "No more items to load",
-                                            Toast.LENGTH_SHORT
-                                        ).show()
-                                        movieViewModel.resetNoMoreItems()
                                     }
                                 }
                             }
                         }
                     }
-
                 }
             }
         }
     }
 }
-
-
