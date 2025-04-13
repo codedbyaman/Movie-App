@@ -1,4 +1,3 @@
-
 package com.example.movieapp
 
 data class VideoResponse(

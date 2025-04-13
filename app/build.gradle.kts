@@ -14,8 +14,17 @@ android {
         targetSdk = 35
         versionCode = 1
         versionName = "1.0"
-
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+    android {
+        buildFeatures {
+            compose = true
+        }
+
+        composeOptions {
+            kotlinCompilerExtensionVersion = "1.5.11" // or match your Compose version
+        }
     }
 
     buildTypes {
@@ -70,6 +79,13 @@ dependencies {
     implementation(libs.media3.ui)
     implementation(libs.accompanist.swiperefresh)
     implementation (libs.core)
+    implementation(libs.navigation.compose)
+    implementation(libs.coil.compose)
+    implementation(libs.accompanist.swiperefresh)
+    implementation(libs.core)
+    implementation(libs.androidx.compose.bom)
+
+
 
 
 }

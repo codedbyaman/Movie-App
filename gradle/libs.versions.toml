@@ -25,6 +25,7 @@ accompanist = "0.33.2-alpha"
 [libraries]
 # ExoPlayer
 core = { module = "com.pierfrancescosoffritti.androidyoutubeplayer:core", version.ref = "core" }
+material3 = { module = "androidx.compose.material3:material3" }
 media3-exoplayer = { group = "androidx.media3", name = "media3-exoplayer", version.ref = "media3" }
 media3-ui = { group = "androidx.media3", name = "media3-ui", version.ref = "media3" }
 

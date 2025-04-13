@@ -83,7 +83,7 @@ class MovieViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    suspend fun getVideoKey (
+    suspend fun getVideoKey(
         movieId: Int
     ): String {
         return try {
