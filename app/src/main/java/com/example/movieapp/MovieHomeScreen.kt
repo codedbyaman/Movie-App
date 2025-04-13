@@ -1,5 +1,6 @@
 package com.example.movieapp
 
+import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.foundation.Image
@@ -7,6 +8,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.material.icons.Icons
@@ -18,6 +20,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -36,6 +39,12 @@ fun MovieHomeScreen(navController: NavController, movieViewModel: MovieViewModel
     val favorites by movieViewModel.favorites.collectAsState()
     val isRefreshing = remember { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
+    val context = LocalContext.current
+    val isLoadingMore by movieViewModel.isLoadingMore.collectAsState()
+    val noMoreItems by movieViewModel.noMoreItems.collectAsState()
+
+
+
 
     Scaffold(
         topBar = {
@@ -164,7 +173,16 @@ fun MovieHomeScreen(navController: NavController, movieViewModel: MovieViewModel
                                         onClick = {
                                             coroutineScope.launch {
                                                 val videoId = movieViewModel.getVideoKey(movie.id)
-                                                navController.navigate("trailer/$videoId")
+                                                if (videoId.isNotBlank()) {
+                                                    navController.navigate("trailer/$videoId")
+                                                } else {
+                                                    Toast.makeText(
+                                                        context,
+                                                        "Unable to load video. Check your connection.",
+                                                        Toast.LENGTH_SHORT
+                                                    ).show()
+                                                }
+
                                             }
                                         },
                                         colors = ButtonDefaults.buttonColors(
@@ -191,18 +209,34 @@ fun MovieHomeScreen(navController: NavController, movieViewModel: MovieViewModel
 
                     // ✅ Correct placement of Load More
                     if (visibleMovies.size >= 10) {
-                        item {
-                            Spacer(modifier = Modifier.height(16.dp))
-                            Button(
-                                onClick = { movieViewModel.loadMore() },
+                        item(span = { GridItemSpan(maxLineSpan) }) {
+                            Box(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(12.dp)
+                                    .padding(vertical = 16.dp),
+                                contentAlignment = Alignment.Center
                             ) {
-                                Text("Load More")
+                                if (isLoadingMore) {
+                                    CircularProgressIndicator()
+                                } else {
+                                    Button(onClick = { movieViewModel.loadMore() }) {
+                                        Text("Load More")
+                                    }
+                                }
+                                LaunchedEffect(noMoreItems) {
+                                    if (noMoreItems) {
+                                        Toast.makeText(
+                                            context,
+                                            "No more items to load",
+                                            Toast.LENGTH_SHORT
+                                        ).show()
+                                        movieViewModel.resetNoMoreItems()
+                                    }
+                                }
                             }
                         }
                     }
+
                 }
             }
         }

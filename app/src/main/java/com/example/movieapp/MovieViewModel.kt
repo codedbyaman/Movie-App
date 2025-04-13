@@ -4,6 +4,7 @@ import android.app.Application
 import android.content.Context
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -24,6 +25,13 @@ class MovieViewModel(application: Application) : AndroidViewModel(application) {
     private val apiKey = "f96958f3c5cc57e2d4e19ee574667d96"
     private val sharedPrefs = application.getSharedPreferences("favorites", Context.MODE_PRIVATE)
     private var totalLoaded = 10
+
+    private val _isLoadingMore = MutableStateFlow(false)
+    val isLoadingMore: StateFlow<Boolean> = _isLoadingMore
+
+    val _noMoreItems = MutableStateFlow(false)
+    val noMoreItems: StateFlow<Boolean> = _noMoreItems
+
 
     init {
         fetchMovies()
@@ -54,9 +62,26 @@ class MovieViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun loadMore() {
-        totalLoaded += 10
-        filterVisible()
+        viewModelScope.launch {
+            _isLoadingMore.value = true
+            delay(800)
+            val current = _visibleMovies.value.size
+            val next = _movies.value.drop(current).take(10)
+
+            if (next.isEmpty()) {
+                _noMoreItems.value = true
+            } else {
+                _visibleMovies.value = _visibleMovies.value + next
+            }
+
+            _isLoadingMore.value = false
+        }
     }
+
+    fun resetNoMoreItems() {
+        _noMoreItems.value = false
+    }
+
 
     fun toggleFavorite(movieId: Int) {
         val updated = _favorites.value.toMutableSet()
