@@ -4,6 +4,7 @@ import android.app.Application
 import android.content.Context
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
+import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.delay
@@ -40,17 +41,6 @@ class MovieViewModel(application: Application) : AndroidViewModel(application) {
     private val _loadError = MutableStateFlow<String?>(null)
     val loadError: StateFlow<String?> = _loadError
 
-
-    init {
-        fetchMovies()
-        loadFavorites()
-        viewModelScope.launch {
-            searchQuery.collect {
-                filterVisible()
-            }
-        }
-    }
-
     fun fetchMovies() {
         viewModelScope.launch {
             try {
@@ -61,11 +51,43 @@ class MovieViewModel(application: Application) : AndroidViewModel(application) {
                 _visibleMovies.value = response.results
                 totalPages = response.total_pages
             } catch (e: Exception) {
+                // handle error
             } finally {
                 _isLoadingMore.value = false
             }
         }
     }
+
+    // ✅ 2. Then comes init block
+    init {
+        fetchMovies()
+        loadFavorites()
+
+        viewModelScope.launch {
+            searchQuery.collect { query ->
+                if (query.length >= 3) {
+                    searchFromApi(query)
+                } else {
+                    filterVisible()
+                }
+            }
+        }
+    }
+
+    fun searchFromApi(query: String) {
+        viewModelScope.launch {
+            try {
+                _isLoadingMore.value = true
+                val response = ApiClient.movieService.searchMovies(apiKey, query)
+                _visibleMovies.value = response.results
+            } catch (e: Exception) {
+                _visibleMovies.value = emptyList()
+            } finally {
+                _isLoadingMore.value = false
+            }
+        }
+    }
+
 
     fun loadNextPage(context: Context) {
         viewModelScope.launch {
@@ -106,30 +128,6 @@ class MovieViewModel(application: Application) : AndroidViewModel(application) {
         _loadError.value = null
     }
 
-
-    fun loadMore(context: Context) {
-        viewModelScope.launch {
-            if (!hasInternet(context)) {
-                _noMoreItems.value = true
-                return@launch
-            }
-
-            _isLoadingMore.value = true
-            delay(1000)
-
-            val current = _visibleMovies.value.size
-            val next = _movies.value.drop(current).take(10)
-
-            if (next.isEmpty()) {
-                _noMoreItems.value = true
-            } else {
-                _visibleMovies.value = _visibleMovies.value + next
-            }
-
-            _isLoadingMore.value = false
-        }
-    }
-
     fun filterVisible() {
         _visibleMovies.value = _movies.value
             .filter { it.title.contains(searchQuery.value, ignoreCase = true) }
@@ -167,16 +165,22 @@ class MovieViewModel(application: Application) : AndroidViewModel(application) {
 
     suspend fun getVideoKey(movieId: Int): String {
         return try {
-            val response: VideoResponse = ApiClient.movieService.getMovieVideos(movieId, apiKey)
+            val response = ApiClient.movieService.getMovieVideos(movieId, apiKey)
+            Log.d("MovieViewModel", "Videos for movieId=$movieId: ${response.results}")
             val video = response.results.firstOrNull {
                 it.site.equals("YouTube", ignoreCase = true) &&
-                        it.type.equals("Trailer", ignoreCase = true)
+                        (it.type.equals("Trailer", ignoreCase = true) || it.type.equals(
+                            "Teaser",
+                            ignoreCase = true
+                        ))
             }
             video?.key ?: ""
         } catch (e: Exception) {
+            Log.e("MovieViewModel", "Error fetching video for movieId=$movieId", e)
             ""
         }
     }
+
 
     private fun hasInternet(context: Context): Boolean {
         val cm =
@@ -185,4 +189,6 @@ class MovieViewModel(application: Application) : AndroidViewModel(application) {
         val capabilities = cm.getNetworkCapabilities(network) ?: return false
         return capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
     }
+
+
 }

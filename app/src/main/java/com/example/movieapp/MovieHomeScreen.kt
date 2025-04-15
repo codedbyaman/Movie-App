@@ -75,7 +75,10 @@ fun MovieHomeScreen(navController: NavController, movieViewModel: MovieViewModel
             ) {
                 TopAppBar(
                     title = {
-                        Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                        Box(
+                            modifier = Modifier.fillMaxWidth(),
+                            contentAlignment = Alignment.Center
+                        ) {
                             Text(
                                 text = "Movies And More",
                                 fontSize = 22.sp,
@@ -86,7 +89,11 @@ fun MovieHomeScreen(navController: NavController, movieViewModel: MovieViewModel
                     },
                     actions = {
                         IconButton(onClick = { navController.navigate("favorites") }) {
-                            Icon(Icons.Default.Favorite, contentDescription = "Favorites", tint = Color.White)
+                            Icon(
+                                Icons.Default.Favorite,
+                                contentDescription = "Favorites",
+                                tint = Color.White
+                            )
                         }
                     },
                     colors = TopAppBarDefaults.topAppBarColors(
@@ -149,11 +156,13 @@ fun MovieHomeScreen(navController: NavController, movieViewModel: MovieViewModel
                                         if (videoId.isNotBlank()) {
                                             navController.navigate("trailer/$videoId")
                                         } else {
-                                            Toast.makeText(
-                                                context,
-                                                "Unable to load video. Check your connection.",
-                                                Toast.LENGTH_SHORT
-                                            ).show()
+                                            Toast
+                                                .makeText(
+                                                    context,
+                                                    "Unable to load video. Check your connection.",
+                                                    Toast.LENGTH_SHORT
+                                                )
+                                                .show()
                                         }
                                     }
                                 },
@@ -184,23 +193,20 @@ fun MovieHomeScreen(navController: NavController, movieViewModel: MovieViewModel
                                     horizontalArrangement = Arrangement.SpaceBetween,
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    Button(
-                                        onClick = {
-                                            coroutineScope.launch {
-                                                val videoId = movieViewModel.getVideoKey(movie.id)
-                                                if (videoId.isNotBlank()) {
-                                                    navController.navigate("trailer/$videoId")
-                                                } else {
-                                                    Toast.makeText(
-                                                        context,
-                                                        "Unable to load video. Check your connection.",
-                                                        Toast.LENGTH_SHORT
-                                                    ).show()
-                                                }
+                                    Button(onClick = {
+                                        coroutineScope.launch {
+                                            val videoId = movieViewModel.getVideoKey(movie.id)
+                                            if (videoId.isNotBlank()) {
+                                                navController.navigate("trailer/$videoId")
+                                            } else {
+                                                Toast.makeText(
+                                                    context,
+                                                    "Trailer not available for this movie",
+                                                    Toast.LENGTH_SHORT
+                                                ).show()
                                             }
-                                        },
-                                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF3B82F6))
-                                    ) {
+                                        }
+                                    }) {
                                         Text("Watch", color = Color.White)
                                     }
                                     IconButton(onClick = {
