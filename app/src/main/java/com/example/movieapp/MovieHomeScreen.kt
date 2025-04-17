@@ -12,6 +12,7 @@ import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.material3.*
@@ -21,6 +22,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -35,7 +37,6 @@ import kotlinx.coroutines.launch
 @Composable
 fun MovieHomeScreen(navController: NavController, movieViewModel: MovieViewModel = viewModel()) {
     val context = LocalContext.current
-    val searchQuery by movieViewModel.searchQuery.collectAsState()
     val visibleMovies by movieViewModel.visibleMovies.collectAsState()
     val favorites by movieViewModel.favorites.collectAsState()
     val isRefreshing = remember { mutableStateOf(false) }
@@ -43,6 +44,10 @@ fun MovieHomeScreen(navController: NavController, movieViewModel: MovieViewModel
     val isLoadingMore by movieViewModel.isLoadingMore.collectAsState()
     val noMoreItems by movieViewModel.noMoreItems.collectAsState()
     val loadError by movieViewModel.loadError.collectAsState()
+    val query by movieViewModel.searchQuery.collectAsState()
+    val keyboardController = LocalSoftwareKeyboardController.current
+
+
 
     LaunchedEffect(noMoreItems) {
         if (noMoreItems) {
@@ -67,43 +72,36 @@ fun MovieHomeScreen(navController: NavController, movieViewModel: MovieViewModel
                     .background(
                         Brush.verticalGradient(
                             colors = listOf(
-                                Color(0xFF8B5CF6),
-                                Color(0xFFEC4899)
+                                Color(0xFF8B5CF6), Color(0xFFEC4899)
                             )
                         )
                     )
             ) {
-                TopAppBar(
-                    title = {
-                        Box(
-                            modifier = Modifier.fillMaxWidth(),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(
-                                text = "Movies And More",
-                                fontSize = 22.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = Color.White
-                            )
-                        }
-                    },
-                    actions = {
-                        IconButton(onClick = { navController.navigate("favorites") }) {
-                            Icon(
-                                Icons.Default.Favorite,
-                                contentDescription = "Favorites",
-                                tint = Color.White
-                            )
-                        }
-                    },
-                    colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = Color.Transparent,
-                        titleContentColor = Color.White
-                    )
+                TopAppBar(title = {
+                    Box(
+                        modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "Movies And More",
+                            fontSize = 22.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White
+                        )
+                    }
+                }, actions = {
+                    IconButton(onClick = { navController.navigate("favorites") }) {
+                        Icon(
+                            Icons.Default.Favorite,
+                            contentDescription = "Favorites",
+                            tint = Color.White
+                        )
+                    }
+                }, colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = Color.Transparent, titleContentColor = Color.White
+                )
                 )
             }
-        },
-        containerColor = Color.Transparent
+        }, containerColor = Color.Transparent
     ) { innerPadding ->
         Column(
             modifier = Modifier
@@ -117,28 +115,53 @@ fun MovieHomeScreen(navController: NavController, movieViewModel: MovieViewModel
                 .padding(8.dp)
         ) {
             AnimatedVisibility(visible = true, enter = fadeIn()) {
-                TextField(
-                    value = searchQuery,
+                OutlinedTextField(value = query,
                     onValueChange = { movieViewModel.searchQuery.value = it },
                     placeholder = { Text("Search movies...") },
+                    singleLine = true,
+                    trailingIcon = {
+                        if (query.isNotEmpty()) {
+                            IconButton(onClick = {
+                                movieViewModel.searchQuery.value = ""
+                                keyboardController?.hide()
+                            }) {
+                                Icon(
+                                    Icons.Default.Close,
+                                    contentDescription = "Clear Search",
+                                    tint = Color.White
+                                )
+                            }
+                        }
+                    },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 8.dp),
-                    singleLine = true,
-                    colors = TextFieldDefaults.textFieldColors(containerColor = Color.White)
+                        .padding(horizontal = 12.dp)
+                        .background(
+                            color = Color.White.copy(alpha = 0.15f),
+                            shape = MaterialTheme.shapes.medium
+                        ),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = Color.Transparent,
+                        unfocusedBorderColor = Color.Transparent,
+                        disabledBorderColor = Color.Transparent,
+                        focusedTextColor = Color.White,
+                        unfocusedTextColor = Color.White,
+                        cursorColor = Color.White,
+                        focusedPlaceholderColor = Color.White.copy(alpha = 0.6f),
+                        unfocusedPlaceholderColor = Color.White.copy(alpha = 0.6f)
+                    )
                 )
             }
+
 
             Spacer(modifier = Modifier.height(8.dp))
 
             SwipeRefresh(
-                state = rememberSwipeRefreshState(isRefreshing.value),
-                onRefresh = {
+                state = rememberSwipeRefreshState(isRefreshing.value), onRefresh = {
                     isRefreshing.value = true
                     movieViewModel.fetchMovies()
                     isRefreshing.value = false
-                },
-                modifier = Modifier.weight(1f)
+                }, modifier = Modifier.weight(1f)
             ) {
                 LazyVerticalGrid(
                     columns = GridCells.Fixed(2),
